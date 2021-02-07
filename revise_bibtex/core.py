@@ -142,23 +142,37 @@ def validate_entry(entry, force):
 
 
 def validate_bibs(bib_path, bbl_path, out_bib_file=None,
-                  force=True, skip=False, verbose=False):
+                  force=True, skip=False, verbose=False, no_logs=False):
+
+    if not no_logs:
+        from .logger import add_log_file
+        add_log_file()
+
     if bib_path is None or not os.path.isfile(bib_path):
-        logger.error("Invalid path %s", bib_path, highlight=1)
+        logger.error("Invalid path for bib file \"%s\"", bib_path, highlight=1)
         return
-    if bbl_path is None or not os.path.isfile(bbl_path):
-        logger.error("Invalid path %s", bbl_path, highlight=1)
-        return
+
+    is_there_bbl = False
+    if bbl_path is None:
+        logger.critical("bbl_path is not provided, it is very recommended to provide one", highlight=1)
+    elif not os.path.isfile(bbl_path):
+        logger.error("Invalid path for bbl file \"%s\"", bbl_path, highlight=1)
+    else:
+        is_there_bbl = True
 
     if out_bib_file is not None and bib_path == out_bib_file:
         logger.error("Input and output files should be different, %s" % bib_path, highlight=1)
         return
-    all_ids = get_bib_items_ids(bbl_path)
-    logger.info('Found %d bibitems are to be found...', len(all_ids), highlight=4)
 
     with open(bib_path, 'r') as fl:
         bibtex = bibtexparser.load(fl)
-        logger.info('loaded "%s"', bib_path)
+        logger.info('loaded "%s" ...', bib_path)
+
+    if is_there_bbl:
+        all_ids = get_bib_items_ids(bbl_path)
+        logger.info('%d bibitems are to be found...', len(all_ids), highlight=4)
+    else:
+        all_ids = [entry['ID'] for entry in bibtex.entries]
 
     ids = []
     filtered_entries = []

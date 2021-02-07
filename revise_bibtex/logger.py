@@ -56,7 +56,14 @@ class CustomLogger(logging.LoggerAdapter):
         self.log(logging.PRINT, msg, *args, **kwargs)
 
 
+def add_log_file(path='bib_comments.log'):
+    global _added_log_file, logger
+    if not _added_log_file:
+        logger.addOutputHandler(path)
+        _added_log_file = True
+
+
 logger = CustomLogger(logger=logging.getLogger(__name__), extra=None)
 logger.addOutputHandler(None)
-logger.addOutputHandler('debug.log')
 logger.setLevel(logging.DEBUG)
+_added_log_file = False
