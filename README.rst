@@ -44,3 +44,12 @@ For runtime help, run the following command::
 
     $ python3 -m revise_bibtex --help
 
+
+How to get bbl files
+====================
+
+#. Typically you find the bbl file next to the bib file, when you compile your latex project using `pdflatex` command.
+
+#. For overleaf, you can find it among the log files, check:
+
+   `https://www.overleaf.com/learn/latex/Questions/The_journal_says_%22don't_use_BibTeX;_paste_the_contents_of_the_.bbl_file_into_the_.tex_file%22._How_do_I_do_this_on_Overleaf%3F`
