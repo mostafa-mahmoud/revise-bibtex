@@ -1,4 +1,4 @@
 bibtexparser
 pyperclip
-sklearn
+sklearn<=0.22
 pylcs

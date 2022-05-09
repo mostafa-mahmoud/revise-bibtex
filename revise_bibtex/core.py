@@ -13,12 +13,12 @@ from .utils import (
     remove_umlauts, us_state_abbrev, isclose)
 
 
-inproceedings_keys = ['title', 'publisher', 'address', 'booktitle', 'pages', 'year', 'author']
-article_keys = ['author', 'journal', 'pages', 'publisher', 'year', 'title']
+inproceedings_keys = ['title', 'publisher', 'address', 'booktitle', 'pages', 'year', 'author', 'doi', 'url']
+article_keys = ['author', 'journal', 'pages', 'publisher', 'year', 'title', 'doi', 'url']
 book_keys = ['title', 'author', 'year', 'publisher']
-inbook_keys = ['title', 'author', 'year', 'publisher', 'chapter']
-misc_keys = ['title', 'author', 'year', 'publisher']
-phdthesis_keys = ['title', 'author', 'school', 'year']
+inbook_keys = ['title', 'author', 'year', 'publisher', 'chapter', 'doi', 'url']
+misc_keys = ['title', 'author', 'year', 'url', 'eprint']
+phdthesis_keys = ['title', 'author', 'school', 'year', 'doi', 'url']
 
 
 def get_bib_items_ids(bbl_path):
@@ -41,7 +41,8 @@ def validate_title(entry):
 
     entry['title'] = title
     if counts > 2:
-        return 'Several uncapitalized words (%d) in title %s: %s' % (counts, title, bad_words)
+        pass
+        # return 'Several uncapitalized words (%d) in title %s: %s' % (counts, title, bad_words)
 
 
 def validate_address(entry):
@@ -106,17 +107,34 @@ def validate_pages(entry):
         entry['pages'] = pages
 
 
+def validate_doi(entry):
+    doi_static = "https://doi.org/"
+    if 'doi' and 'url' in entry.keys():
+        entry.pop('url')
+    if 'doi' in entry.keys() and entry['doi'].startswith(doi_static):
+        entry['doi'] = entry['doi'][len(doi_static):]
+    if 'url' in entry.keys():
+        if entry['url'].startswith(doi_static):
+            entry['doi'] = entry['url'][len(doi_static):]
+            entry.pop('url')
+        else:
+            return 'URL is available but not DOI, check please'
+
+
 def validate_entry(entry, force):
     warnings = [
             validate_title(entry),
             validate_author(entry),
             validate_arxiv(entry),
             validate_pages(entry),
-            validate_address(entry)
+            validate_address(entry),
+            validate_doi(entry),
         ]
 
     necessary_keys = globals().get(entry['ENTRYTYPE'] + '_keys', [])
-    year = entry['year']
+    year = entry.get('year', 'YEAR')
+    if 'year' not in entry.keys():
+        warnings.append("Year is empty")
     publisher = entry.get('publisher', '')
     if not necessary_keys:
         warnings.append('Unknown entry type "%s"' % entry['ENTRYTYPE'])
@@ -124,9 +142,9 @@ def validate_entry(entry, force):
         for key in necessary_keys:
             if key not in entry.keys():
                 entry[key] = ''
-            if not entry[key]:
+            if not entry[key] and key != 'url':
                 warnings.append('"%s" is empty' % key)
-            if year in entry[key] and key not in ['year', 'title']:
+            if year in entry[key] and key not in ['year', 'title', 'doi', 'url']:
                 warnings.append('Year "%s": is found in "%s": "%s"' % (year, key, entry[key]))
             if publisher and key !='publisher' and publisher in entry[key]:
                 warnings.append('Publisher "%s" is found in "%s": "%s"' % (publisher, key, entry[key]))
@@ -139,6 +157,7 @@ def validate_entry(entry, force):
                 del entry[key]
     warnings = [x for x in warnings if x]
     return warnings
+
 
 
 def validate_bibs(bib_path, bbl_path, out_bib_file=None,
@@ -184,6 +203,7 @@ def validate_bibs(bib_path, bbl_path, out_bib_file=None,
                 logger.info('skipping %s, because it is not in the bbl file, '
                             'it is probably not cited..', entry['ID'])
             continue
+        note = entry.get('note', None)
         ids.append(entry['ID'])
         filtered_entries.append(entry)
         warnings = validate_entry(entry, force)
@@ -205,6 +225,10 @@ def validate_bibs(bib_path, bbl_path, out_bib_file=None,
             logger.info('%d/%d done..' % (cnt, len(all_ids)))
             logger.info("Looks good...", highlight=2)
             print_entry_dict_as_bib(entry, logger.print)
+        # entry['volume'] = "{}"
+        # entry['number'] = "{}"
+        if note is not None:
+            entry['note'] = note
         cnt += 1
     logger.info('%d/%d done..', cnt, len(all_ids))
     not_seen = set(all_ids) - set(ids)
