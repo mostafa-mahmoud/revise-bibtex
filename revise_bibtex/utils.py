@@ -2,9 +2,8 @@ import pylcs
 from sklearn.feature_extraction import _stop_words as stop_words
 
 
-
 def warn(*args, highlight=1):
-     print('\033[%dm%s\033[39m' % (30 + highlight, ' '.join(args)))
+    print('\033[%dm%s\033[39m' % (30 + highlight, ' '.join(args)))
 
 
 def print_entry_dict_as_bib(entry, print_fn=None, braces=True):
@@ -63,7 +62,7 @@ us_state_abbrev = {
     'New York': 'NY',
     'North Carolina': 'NC',
     'North Dakota': 'ND',
-    'Northern Mariana Islands':'MP',
+    'Northern Mariana Islands': 'MP',
     'Ohio': 'OH',
     'Oklahoma': 'OK',
     'Oregon': 'OR',
@@ -83,6 +82,7 @@ us_state_abbrev = {
     'Wisconsin': 'WI',
     'Wyoming': 'WY'
 }
+
 
 def trim(string):
     string = string.strip()
@@ -108,7 +108,6 @@ def remove_umlauts(string):
         "ò": "\\`{o}",
         "ó": "\\'{o}",
         "ô": "\\^{o}",
-        "ö": '\\"{o}',
         "ő": "\\H{o}",
         "õ": "\\~{o}",
         "ç": "\\c{c}",
@@ -124,7 +123,6 @@ def remove_umlauts(string):
         "ı": "{\\i}",
         "o͡o": "\\t{oo}",
     }
-    #ă
     for k, v in patterns.items():
         string = string.replace(k, v)
     return string
@@ -136,11 +134,13 @@ def isclose(a, b):
 
 def non_capitalized_words(title):
     words = []
-    for word in [word.strip().replace('"', '').replace(",", '').replace(":", '')
-                 for word in title.split()
-                 if word.lower() not in stop_words.ENGLISH_STOP_WORDS]:
+    for word in [
+            word.strip().replace('"', '').replace(",", '').replace(":", '')
+            for word in title.split()
+            if word.lower() not in stop_words.ENGLISH_STOP_WORDS
+            ]:
         words.extend(word.split('-'))
     non_capitalized = list(filter(
         lambda x: (x != x.capitalize() and x != x.upper() and
-            x.lower() not in stop_words.ENGLISH_STOP_WORDS), words))
+                   x.lower() not in stop_words.ENGLISH_STOP_WORDS), words))
     return non_capitalized

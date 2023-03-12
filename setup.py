@@ -4,10 +4,10 @@ from setuptools import setup
 VERSION = __import__('revise_bibtex').__version__
 
 install_requires = [
-    'bibtexparser',
-    'pyperclip',
-    'sklearn',
-    'pylcs',
+    'bibtexparser>=1.2',
+    'pyperclip>=1.8',
+    'scikit-learn>=1.0',
+    'pylcs>=0.0.6',
 ]
 
 setup(name='revise_bibtex',

@@ -7,12 +7,15 @@ logging.addLevelName(logging.PRINT, "PRINT")
 
 
 class ColoredFormatter(logging.Formatter):
-    # FORMAT = "[%(asctime)s][%(pathname)s:%(funcName)s:%(lineno)d] %(levelname)s: %(message)s"
+    # FORMAT = "[%(asctime)s][%(pathname)s:%(funcName)s:%(lineno)d]"\
+    #           "%(levelname)s: %(message)s"
     FORMAT = "[%(asctime)s %(levelname)s]: %(message)s"
     DATE_FMT = '%Y-%m-%d %H:%M:%S'
 
     def __init__(self, use_highlight=True):
-        super().__init__(ColoredFormatter.FORMAT, datefmt=ColoredFormatter.DATE_FMT)
+        super().__init__(
+            ColoredFormatter.FORMAT, datefmt=ColoredFormatter.DATE_FMT
+        )
         self.use_highlight = use_highlight
 
     def format(self, record):
@@ -20,7 +23,8 @@ class ColoredFormatter(logging.Formatter):
         if record.levelno == logging.PRINT:
             self._style._fmt = '%(message)s'
         if os.name == 'posix':  # coloring doesn't always work well for Windows
-            if self.use_highlight and hasattr(record, 'highlight') and record.highlight != 0:
+            if self.use_highlight and hasattr(record, 'highlight') and\
+                    record.highlight != 0:
                 start = '\033[%dm' % (record.highlight + 30)
                 end = '\033[%dm' % 39
                 return start + super().format(record) + end
