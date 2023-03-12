@@ -10,15 +10,19 @@ import pyperclip
 from .logger import logger
 from .utils import (
     print_entry_dict_as_bib, trim, non_capitalized_words,
-    remove_umlauts, us_state_abbrev, isclose)
+    remove_umlauts, us_state_abbrev, isclose
+)
 
 
-inproceedings_keys = ['title', 'publisher', 'address', 'booktitle', 'pages', 'year', 'author', 'doi', 'url']
-article_keys = ['author', 'journal', 'pages', 'publisher', 'year', 'title', 'doi', 'url']
-book_keys = ['title', 'author', 'year', 'publisher']
-inbook_keys = ['title', 'author', 'year', 'publisher', 'chapter', 'doi', 'url']
-misc_keys = ['title', 'author', 'year', 'url', 'eprint']
-phdthesis_keys = ['title', 'author', 'school', 'year', 'doi', 'url']
+required_keys = {
+    "inproceedings": ['title', 'publisher', 'address', 'booktitle', 'pages', 'year', 'author'],
+    "article": ['author', 'journal', 'pages', 'publisher', 'year', 'title'],
+    "book": ['title', 'author', 'year', 'publisher'],
+    "inbook": ['title', 'author', 'year', 'publisher', 'chapter'],
+    "misc": ['title', 'author', 'year', 'url', 'eprint'],
+    "phdthesis": ['title', 'author', 'school', 'year'],
+    "masterthesis": ['title', 'author', 'school', 'year'],
+}
 
 
 def get_bib_items_ids(bbl_path):
@@ -121,17 +125,19 @@ def validate_doi(entry):
             return 'URL is available but not DOI, check please'
 
 
-def validate_entry(entry, force):
-    warnings = [
-            validate_title(entry),
-            validate_author(entry),
-            validate_arxiv(entry),
-            validate_pages(entry),
-            validate_address(entry),
-            validate_doi(entry),
-        ]
+def validate_entry(entry, force, force_doi=False):
 
-    necessary_keys = globals().get(entry['ENTRYTYPE'] + '_keys', [])
+    warnings = [
+        validate_title(entry),
+        validate_author(entry),
+        validate_arxiv(entry),
+        validate_pages(entry),
+        validate_address(entry),
+    ]
+    if force_doi:
+        warnings.append(validate_doi(entry))
+
+    necessary_keys = required_keys.get(entry['ENTRYTYPE'], [])
     year = entry.get('year', 'YEAR')
     if 'year' not in entry.keys():
         warnings.append("Year is empty")
@@ -159,9 +165,9 @@ def validate_entry(entry, force):
     return warnings
 
 
-
-def validate_bibs(bib_path, bbl_path, out_bib_file=None,
-                  force=True, skip=False, verbose=False, no_logs=False):
+def validate_bibs(bib_path, bbl_path, out_bib_file=None, force=True,
+                  skip=False, verbose=False, no_logs=False, force_doi=False,
+                  braces=True):
 
     if not no_logs:
         from .logger import add_log_file
@@ -206,11 +212,11 @@ def validate_bibs(bib_path, bbl_path, out_bib_file=None,
         note = entry.get('note', None)
         ids.append(entry['ID'])
         filtered_entries.append(entry)
-        warnings = validate_entry(entry, force)
+        warnings = validate_entry(entry, force, force_doi=force_doi)
         if warnings:
             for w in warnings:
                 logger.warning(w, highlight=3)
-            print_entry_dict_as_bib(entry)
+            print_entry_dict_as_bib(entry, braces=braces)
             pyperclip.copy(entry['title'].replace('{', '').replace('}', ''))
             # logger.info('%d/%d done..' % (cnt, len(bibtex.entries)))
             logger.info('%d/%d done..\n', cnt, len(all_ids))
@@ -224,7 +230,7 @@ def validate_bibs(bib_path, bbl_path, out_bib_file=None,
         elif verbose:
             logger.info('%d/%d done..' % (cnt, len(all_ids)))
             logger.info("Looks good...", highlight=2)
-            print_entry_dict_as_bib(entry, logger.print)
+            print_entry_dict_as_bib(entry, logger.print, braces=braces)
         # entry['volume'] = "{}"
         # entry['number'] = "{}"
         if note is not None:

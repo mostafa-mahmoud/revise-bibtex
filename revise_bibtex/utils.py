@@ -1,19 +1,23 @@
 import pylcs
-from sklearn.feature_extraction import stop_words
+from sklearn.feature_extraction import _stop_words as stop_words
+
 
 
 def warn(*args, highlight=1):
      print('\033[%dm%s\033[39m' % (30 + highlight, ' '.join(args)))
 
 
-def print_entry_dict_as_bib(entry, print_fn=None):
+def print_entry_dict_as_bib(entry, print_fn=None, braces=True):
     keys = list(entry.keys())
     ordered_keys = ['ENTRYTYPE', 'ID', 'title']
     if 'author' in entry.keys():
         ordered_keys.append('author')
     remaining_keys = [k for k in keys if k not in ordered_keys]
     keys = ordered_keys + remaining_keys
-    merged = ',\n'.join(['    %s={%s}' % (k, entry[k]) for k in keys[2:]])
+    if braces:
+        merged = ',\n'.join(['    %s={%s}' % (k, entry[k]) for k in keys[2:]])
+    else:
+        merged = ',\n'.join(['    %s="%s"' % (k, entry[k]) for k in keys[2:]])
 
     if print_fn is None:
         print("@%s{%s,\n%s\n}\n\n" % (entry['ENTRYTYPE'], entry['ID'], merged))
